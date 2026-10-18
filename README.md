@@ -19,5 +19,5 @@ The parameters for each container include:
 
 The system continuously recalculates these parameters following every action taken by a student, allowing for the real-time observation of the consequences of engineering decisions.
 
-RU version: https://blazorrepl.telerik.com/repl/embed/GgEiPsPU10yzdKxa36?editor=false&result=true&errorList=false
-EN version: https://blazorrepl.telerik.com/repl/embed/wAvklWwY12zG3TeR21?editor=true&result=true&errorList=true
+* **RU version**: https://blazorrepl.telerik.com/repl/embed/GgEiPsPU10yzdKxa36?editor=false&result=true&errorList=false
+* **EN version**: https://blazorrepl.telerik.com/repl/embed/wAvklWwY12zG3TeR21?editor=true&result=true&errorList=true
