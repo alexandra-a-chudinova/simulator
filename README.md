@@ -4,8 +4,8 @@
 The virtual environment simulates a distributed computing cluster consisting of physical servers, on which numerous CAD applications are deployed within containers.
 
 The characteristics of each virtual server include:
-* **CPU Load — ** real-time processor utilization and core performance tracking.
-* **Memory Usage — ** active RAM consumption, allocation rates, and available headroom.
+* **CPU Load —** real-time processor utilization and core performance tracking.
+* **Memory Usage —** active RAM consumption, allocation rates, and available headroom.
 * **Storage Capacity —** total disk space, read/write throughput, and volume utilization.
 * **Network Bandwidth —** inbound and outbound traffic rates, packet loss, and transfer speeds.
 * **Active Containers —** the total count and operational status of containers currently running on the server.
