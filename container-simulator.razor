@@ -1,0 +1,237 @@
+@page "/container-simulator"
+
+<h2>Container Virtualization Simulator</h2>
+
+<p>
+This simulator demonstrates resource allocation in a containerized CAD cluster.
+</p>
+
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="DeployContainer">
+        Deploy New Container
+    </button>
+
+    <button class="btn btn-success me-2" @onclick="OptimizeCluster">
+        AI Optimization
+    </button>
+
+    <button class="btn btn-warning" @onclick="ResetSimulation">
+        Reset
+    </button>
+</div>
+
+<div class="row">
+
+@foreach (var server in Servers)
+{
+    <div class="col-md-4">
+
+        <div class="card mb-3">
+
+            <div class="card-header bg-dark text-white">
+                <strong>@server.Name</strong>
+            </div>
+
+            <div class="card-body">
+
+                <p>
+                    CPU:
+                    <b>@server.CPU%</b>
+                </p>
+
+                <div class="progress mb-2">
+                    <div class="progress-bar"
+                         style="width:@server.CPU%">
+                    </div>
+                </div>
+
+                <p>
+                    RAM:
+                    <b>@server.Memory%</b>
+                </p>
+
+                <div class="progress mb-3">
+                    <div class="progress-bar bg-success"
+                         style="width:@server.Memory%">
+                    </div>
+                </div>
+
+                <h6>Containers</h6>
+
+                @foreach (var c in server.Containers)
+                {
+                    <div class="border rounded p-2 mb-2">
+
+                        <strong>@c.Name</strong>
+
+                        <br />
+
+                        CPU: @c.CPU%
+
+                        <br />
+
+                        RAM: @c.Memory%
+
+                        <br />
+
+                        <button class="btn btn-sm btn-outline-primary mt-2"
+                                @onclick="() => MoveContainer(c)">
+                            Migrate
+                        </button>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+</div>
+
+<hr />
+
+<h4>Simulation Statistics</h4>
+
+<table class="table table-bordered">
+
+    <tr>
+        <td>Total Containers</td>
+        <td>@TotalContainers</td>
+    </tr>
+
+    <tr>
+        <td>Average CPU Usage</td>
+        <td>@AverageCPU%</td>
+    </tr>
+
+    <tr>
+        <td>Average RAM Usage</td>
+        <td>@AverageRAM%</td>
+    </tr>
+
+</table>
+
+@code
+{
+    Random random = new();
+
+    class Container
+    {
+        public string Name { get; set; } = "";
+        public int CPU { get; set; }
+        public int Memory { get; set; }
+    }
+
+    class Server
+    {
+        public string Name { get; set; } = "";
+        public int CPU { get; set; }
+        public int Memory { get; set; }
+
+        public List<Container> Containers { get; set; }
+            = new();
+    }
+
+    List<Server> Servers = new();
+
+    int counter = 1;
+
+    protected override void OnInitialized()
+    {
+        ResetSimulation();
+    }
+
+    void ResetSimulation()
+    {
+        counter = 1;
+
+        Servers = new()
+        {
+            new Server { Name="Server A"},
+            new Server { Name="Server B"},
+            new Server { Name="Server C"}
+        };
+
+        for(int i=0;i<6;i++)
+            DeployContainer();
+    }
+
+    void DeployContainer()
+    {
+        var c = new Container
+        {
+            Name = $"CAD-{counter++}",
+            CPU = random.Next(5,20),
+            Memory = random.Next(5,15)
+        };
+
+        var server = Servers
+            .OrderBy(s => s.CPU)
+            .First();
+
+        server.Containers.Add(c);
+
+        Recalculate(server);
+    }
+
+    void MoveContainer(Container container)
+    {
+        var source = Servers.First(s => s.Containers.Contains(container));
+
+        source.Containers.Remove(container);
+
+        Recalculate(source);
+
+        var target = Servers
+            .OrderBy(s => s.CPU)
+            .First();
+
+        target.Containers.Add(container);
+
+        Recalculate(target);
+    }
+
+    void OptimizeCluster()
+    {
+        var overloaded = Servers
+            .OrderByDescending(s => s.CPU)
+            .First();
+
+        if (overloaded.Containers.Count == 0)
+            return;
+
+        var biggest =
+            overloaded.Containers
+            .OrderByDescending(c => c.CPU)
+            .First();
+
+        MoveContainer(biggest);
+    }
+
+    void Recalculate(Server server)
+    {
+        server.CPU =
+            server.Containers.Sum(c => c.CPU);
+
+        server.Memory =
+            server.Containers.Sum(c => c.Memory);
+
+        StateHasChanged();
+    }
+
+    int TotalContainers =>
+        Servers.Sum(s => s.Containers.Count);
+
+    int AverageCPU =>
+        Servers.Count == 0
+            ? 0
+            : Servers.Sum(s => s.CPU) / Servers.Count;
+
+    int AverageRAM =>
+        Servers.Count == 0
+            ? 0
+            : Servers.Sum(s => s.Memory) / Servers.Count;
+}
