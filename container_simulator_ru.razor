@@ -1,0 +1,1691 @@
+@using System.Linq
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+
+
+<PageTitle>
+    Симулятор виртуализации контейнеров
+</PageTitle>
+
+
+<TelerikSplitter Orientation="SplitterOrientation.Horizontal"
+                 Height="950px">
+
+
+    <SplitterPanes>
+
+        <SplitterPane Size="70%">
+
+
+            <div class="k-p-4">
+
+
+                <h2 class="k-mb-2">
+                    Распределенный вычислительный кластер
+                </h2>
+
+
+                <p class="k-color-subtle k-mb-4">
+                    Симуляция физических серверов, размещающих
+                    контейнеризированные САПР-приложения.
+                </p>
+
+
+                <TelerikTileLayout Columns="2"
+                                   ColumnWidth="430px"
+                                   RowHeight="360px"
+                                   Resizable="true"
+                                   Reorderable="true">
+
+
+                    <TileLayoutItems>
+
+
+                        @foreach (var server in Servers)
+                        {
+                            <TileLayoutItem>
+
+
+                                <HeaderTemplate>
+
+
+                                    <strong>
+                                        @server.Name
+                                    </strong>
+
+
+                                </HeaderTemplate>
+
+
+                                <Content>
+
+
+                                    <div class="k-mb-3">
+
+
+                                        <strong>Загрузка ЦП</strong>
+
+
+                                        <TelerikProgressBar Value="@server.CPU"
+                                                            Max="100">
+                                        </TelerikProgressBar>
+
+
+                                        <small>@server.CPU.ToString("0") %</small>
+
+
+                                    </div>
+
+
+                                    <div class="k-mb-3">
+
+
+                                        <strong>Использование памяти</strong>
+
+
+                                        <TelerikProgressBar Value="@server.Memory"
+                                                            Max="100">
+                                        </TelerikProgressBar>
+
+
+                                        <small>@server.Memory.ToString("0") %</small>
+
+
+                                    </div>
+
+
+                                    <div class="k-mb-3">
+
+
+                                        <strong>Заполнение накопителя</strong>
+
+
+                                        <TelerikProgressBar Value="@server.Storage"
+                                                            Max="100">
+                                        </TelerikProgressBar>
+
+
+                                        <small>@server.Storage.ToString("0") %</small>
+
+
+                                    </div>
+
+
+                                    <div class="k-mb-3">
+
+
+                                        <strong>Сетевая пропускная способность</strong>
+
+
+                                        <TelerikProgressBar Value="@server.Network"
+                                                            Max="100">
+                                        </TelerikProgressBar>
+
+
+                                        <small>@server.Network.ToString("0") %</small>
+
+
+                                    </div>
+
+
+                                    <div class="k-mb-3">
+
+
+                                        <span class="badge k-bg-primary k-color-on-primary">
+
+
+                                            Активные контейнеры:
+                                            @server.Containers.Count
+
+
+                                        </span>
+
+
+                                    </div>
+
+
+                                    <TelerikGrid Data="@server.Containers"
+                                                 Height="170px"
+                                                 Pageable="false"
+                                                 Sortable="true">
+
+
+                                        <GridColumns>
+
+
+                                            <GridColumn Field="@nameof(ContainerModel.Name)"
+                                                        Title="Контейнер" />
+
+
+                                            <GridColumn Field="@nameof(ContainerModel.CPU)"
+                                                        Width="70px"
+                                                        Title="ЦП" />
+
+
+                                            <GridColumn Field="@nameof(ContainerModel.Memory)"
+                                                        Width="80px"
+                                                        Title="ОЗУ" />
+
+
+                                            <GridColumn Field="@nameof(ContainerModel.Priority)"
+                                                        Width="100px"
+                                                        Title="Приоритет" />
+
+
+                                            <GridColumn Width="130px"
+                                                        Title="Действие">
+
+
+                                                <Template Context="item">
+
+
+                                                    @{
+                                                        var container = (ContainerModel)item;
+                                                    }
+
+
+                                                    <TelerikButton Size="@ThemeConstants.Button.Size.Small"
+                                                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                                                   OnClick="@(() => MigrateContainer(container))">
+
+
+                                                        Мигрировать
+
+
+                                                    </TelerikButton>
+
+
+                                                </Template>
+
+
+                                            </GridColumn>
+
+
+                                        </GridColumns>
+
+
+                                    </TelerikGrid>
+
+
+                                </Content>
+
+
+                            </TileLayoutItem>
+                        }
+
+
+                    </TileLayoutItems>
+
+
+                </TelerikTileLayout>
+
+
+            </div>
+
+
+        </SplitterPane>
+
+        <SplitterPane Size="30%" Scrollable="true">
+
+
+            <div class="k-p-4 k-d-flex k-flex-col k-gap-4">
+
+
+                <h3 class="k-mb-0">Обучающие сценарии</h3>
+
+
+                <p class="k-color-subtle k-mb-0">
+                    Выберите инженерный сценарий и выполните операции по управлению
+                    ресурсами в виртуальном кластере.
+                </p>
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Выбор сценария</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <TelerikDropDownList Data="@ScenarioList"
+                                             TextField="@nameof(TrainingScenario.Name)"
+                                             ValueField="@nameof(TrainingScenario.Id)"
+                                             @bind-Value="SelectedScenarioId"
+                                             Class="k-w-full"
+                                             OnChange="@ScenarioChanged">
+                        </TelerikDropDownList>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Текущий сценарий</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <h5 class="k-mb-2">@CurrentScenario.Name</h5>
+
+
+                        <p class="k-mb-0">
+                            @CurrentScenario.Description
+                        </p>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Цели обучения</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <ul class="k-mb-0">
+
+
+                            @foreach (var objective in CurrentScenario.Objectives)
+                            {
+                                <li>@objective</li>
+                            }
+
+
+                        </ul>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Действия студента</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <div class="k-d-flex k-flex-col k-gap-2">
+
+
+                            <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                           Class="k-w-full"
+                                           OnClick="@DeployContainer">
+
+
+                                Развернуть CAD-контейнер
+
+
+                            </TelerikButton>
+
+
+                            <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Warning"
+                                           Class="k-w-full"
+                                           OnClick="@BalanceCluster">
+
+
+                                Балансировка кластера
+
+
+                            </TelerikButton>
+
+
+                            <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Info"
+                                           Class="k-w-full"
+                                           OnClick="@RecoverServer">
+
+
+                                Восстановить упавший сервер
+
+
+                            </TelerikButton>
+
+
+                            <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Success"
+                                           Class="k-w-full"
+                                           OnClick="@EnergyOptimization">
+
+
+                                Энергооптимизация
+
+
+                            </TelerikButton>
+
+
+                        </div>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Прогресс обучения</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <div class="k-mb-4">
+
+
+                            <div class="k-mb-1">Завершение сценария</div>
+
+
+                            <TelerikProgressBar Value="@ScenarioCompletion"
+                                                Max="100">
+                            </TelerikProgressBar>
+
+
+                            <strong>
+
+
+                                @ScenarioCompletion %
+
+
+                            </strong>
+
+
+                        </div>
+
+
+                        <div class="k-mb-4">
+
+
+                            <div class="k-mb-1">Инженерная оценка</div>
+
+
+                            <TelerikProgressBar Value="@EngineeringScore"
+                                                Max="100">
+                            </TelerikProgressBar>
+
+
+                            <strong>
+
+
+                                @EngineeringScore / 100
+
+
+                            </strong>
+
+
+                        </div>
+
+
+                        <div class="alert k-p-3 k-rounded-md k-bg-app-surface">
+
+
+                            <strong>Статус</strong>
+
+
+                            <br />
+
+
+                            @ScenarioStatus
+
+
+                        </div>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Адаптивное управление ресурсами</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <TelerikTabStrip>
+
+                            <TabStripTab Title="Ручное">
+
+
+                                <div class="k-mt-4">
+
+
+                                    <p>
+
+
+                                        Студент самостоятельно управляет
+                                        развертыванием контейнеров, их миграцией
+                                        и распределением ресурсов.
+
+
+                                    </p>
+
+
+                                    <TelerikButton Class="k-w-full"
+                                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                                   OnClick="@ManualDecision">
+
+
+                                        Выполнить ручную стратегию
+
+
+                                    </TelerikButton>
+
+
+                                </div>
+
+
+                            </TabStripTab>
+
+                            <TabStripTab Title="Эвристический">
+
+
+                                <div class="k-mt-4">
+
+
+                                    <p>
+
+
+                                        Планировщик на основе правил, балансирующий
+                                        загрузку ЦП и памяти в соответствии
+                                        с предопределенными политиками.
+
+
+                                    </p>
+
+
+                                    <TelerikButton Class="k-w-full"
+                                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Warning"
+                                                   OnClick="@HeuristicDecision">
+
+
+                                        Запустить эвристический планировщик
+
+
+                                    </TelerikButton>
+
+
+                                </div>
+
+
+                            </TabStripTab>
+
+
+                            <TabStripTab Title="Адаптивный ИИ">
+
+
+                                <div class="k-mt-4">
+
+
+                                    <p>
+
+
+                                        Адаптивный контроллер на базе обучения
+                                        с подкреплением, рекомендующий оптимальное
+                                        распределение ресурсов.
+
+
+                                    </p>
+
+
+                                    <TelerikButton Class="k-w-full"
+                                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Success"
+                                                   OnClick="@AdaptiveDecision">
+
+
+                                        Запустить адаптивный контроллер
+
+
+                                    </TelerikButton>
+
+
+                                </div>
+
+
+                            </TabStripTab>
+
+
+                        </TelerikTabStrip>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Рекомендация</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <TelerikTextArea Class="k-w-full"
+                                         Rows="6"
+                                         ReadOnly="true"
+                                         Value="@CurrentRecommendation">
+                        </TelerikTextArea>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>Эффективность адаптивного контроллера</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <div class="k-mb-4">
+
+
+                            <div class="k-mb-1">Уверенность контроллера</div>
+
+
+                            <TelerikProgressBar Value="@AIConfidence"
+                                                Max="100">
+                            </TelerikProgressBar>
+
+
+                            <strong>
+
+
+                                @AIConfidence %
+
+
+                            </strong>
+
+
+                        </div>
+
+
+                        <div class="k-mb-4">
+
+
+                            <div class="k-mb-1">Прогресс обучения</div>
+
+
+                            <TelerikProgressBar Value="@LearningProgress"
+                                                Max="100">
+                            </TelerikProgressBar>
+
+
+                            <strong>
+
+
+                                @LearningProgress %
+
+
+                            </strong>
+
+
+                        </div>
+
+
+                        <div class="k-mb-0">
+
+
+                            <div class="k-mb-1">Эффективность кластера</div>
+
+
+                            <TelerikProgressBar Value="@ClusterEfficiency"
+                                                Max="100">
+                            </TelerikProgressBar>
+
+
+                            <strong>
+
+
+                                @ClusterEfficiency %
+
+
+                            </strong>
+
+
+                        </div>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+                <TelerikCard>
+
+
+                    <CardHeader>
+
+
+                        <strong>История решений</strong>
+
+
+                    </CardHeader>
+
+
+                    <CardBody>
+
+
+                        <TelerikGrid Data="@DecisionHistory"
+                                     Height="280px"
+                                     Pageable="false"
+                                     Sortable="true">
+
+
+                            <GridColumns>
+
+
+                                <GridColumn Field="@nameof(DecisionRecord.Time)"
+                                            Width="110px"
+                                            Title="Время" />
+
+
+                                <GridColumn Field="@nameof(DecisionRecord.Controller)"
+                                            Width="160px"
+                                            Title="Контроллер" />
+
+
+                                <GridColumn Field="@nameof(DecisionRecord.Action)"
+                                            Width="210px"
+                                            Title="Действие" />
+
+
+                                <GridColumn Field="@nameof(DecisionRecord.Reward)"
+                                            Width="90px"
+                                            Title="Награда" />
+
+
+                                <GridColumn Field="@nameof(DecisionRecord.Score)"
+                                            Width="90px"
+                                            Title="Баллы" />
+
+
+                            </GridColumns>
+
+
+                        </TelerikGrid>
+
+
+                    </CardBody>
+
+
+                </TelerikCard>
+
+
+            </div>
+
+
+        </SplitterPane>
+
+
+    </SplitterPanes>
+
+
+</TelerikSplitter>
+
+
+@code
+{
+
+    public class ContainerModel
+    {
+        public string Name { get; set; } = "";
+
+
+        public double CPU { get; set; }
+
+
+        public double Memory { get; set; }
+
+
+        public string Status { get; set; } = "Работает";
+
+
+        public string Priority { get; set; } = "Обычный";
+
+
+        public List<string> MigrationHistory { get; set; } = new();
+    }
+
+
+    public class ServerModel
+    {
+        public string Name { get; set; } = "";
+
+
+        public double CPU { get; set; }
+
+
+        public double Memory { get; set; }
+
+
+        public double Storage { get; set; }
+
+
+        public double Network { get; set; }
+
+
+        public bool IsOnline { get; set; } = true;
+
+
+        public List<ContainerModel> Containers { get; set; } = new();
+    }
+
+
+    public class TrainingScenario
+    {
+        public int Id { get; set; }
+
+
+        public string Name { get; set; } = "";
+
+
+        public string Description { get; set; } = "";
+
+
+        public List<string> Objectives { get; set; } = new();
+    }
+
+
+    public class DecisionRecord
+    {
+        public string Time { get; set; } = "";
+
+
+        public string Controller { get; set; } = "";
+
+
+        public string Action { get; set; } = "";
+
+
+        public double Reward { get; set; }
+
+
+        public int Score { get; set; }
+    }
+
+    private readonly Random rnd = new();
+
+
+    List<ServerModel> Servers = new();
+
+
+    List<TrainingScenario> ScenarioList = new();
+
+
+    List<DecisionRecord> DecisionHistory = new();
+
+
+    TrainingScenario CurrentScenario = new();
+
+
+    int SelectedScenarioId = 1;
+
+
+    int ScenarioCompletion = 0;
+
+
+    int EngineeringScore = 0;
+
+
+    string ScenarioStatus = "Готов";
+
+
+    int AIConfidence = 70;
+
+
+    int LearningProgress = 0;
+
+
+    int ClusterEfficiency = 75;
+
+
+    string CurrentRecommendation =
+        "Адаптивный контроллер ожидает действий студента.";
+
+
+    protected override void OnInitialized()
+    {
+        InitializeServers();
+
+
+        InitializeScenarios();
+
+
+        Recalculate();
+    }
+
+    void InitializeServers()
+    {
+        Servers.Clear();
+
+
+        for (int i = 1; i <= 4; i++)
+        {
+            var server = new ServerModel
+            {
+                Name = $"Физический сервер {i}",
+
+
+                CPU = rnd.Next(15, 45),
+
+
+                Memory = rnd.Next(20, 50),
+
+
+                Storage = rnd.Next(25, 55),
+
+
+                Network = rnd.Next(15, 40)
+            };
+
+
+            for (int j = 1; j <= 4; j++)
+            {
+                server.Containers.Add(new ContainerModel
+                {
+                    Name = $"CAD-{i}-{j}",
+
+
+                    CPU = rnd.Next(4, 12),
+
+
+                    Memory = rnd.Next(3, 10),
+
+
+                    Priority = "Обычный",
+
+
+                    Status = "Работает"
+                });
+            }
+
+
+            Servers.Add(server);
+        }
+    }
+
+    void InitializeScenarios()
+    {
+        ScenarioList = new()
+        {
+            new()
+            {
+                Id = 1,
+                Name = "Развертывание новых CAD-контейнеров",
+
+
+                Description =
+                    "Разверните дополнительные CAD-контейнеры, сохраняя при этом допустимый уровень использования ресурсов.",
+
+
+                Objectives =
+                {
+                    "Развернуть контейнеры",
+                    "Мониторить загрузку ЦП",
+                    "Избегать перегрузки"
+                }
+            },
+
+
+            new()
+            {
+                Id = 2,
+
+
+                Name = "Перегрузка ресурсов",
+
+
+                Description =
+                    "Снизьте чрезмерное использование ЦП и ОЗУ.",
+
+
+                Objectives =
+                {
+                    "Обнаружить перегрузку",
+                    "Перераспределить нагрузку",
+                    "Сохранить доступность сервисов"
+                }
+            },
+
+
+            new()
+            {
+                Id = 3,
+
+
+                Name = "Балансировка нагрузки",
+
+
+                Description =
+                    "Сбалансируйте вычислительную нагрузку между серверами.",
+
+
+                Objectives =
+                {
+                    "Сравнить загрузку серверов",
+                    "Мигрировать контейнеры",
+                    "Оптимизировать пропускную способность"
+                }
+            },
+
+
+            new()
+            {
+                Id = 4,
+
+
+                Name = "Миграция контейнера",
+
+
+                Description =
+                    "Переместите контейнеры между физическими серверами без остановки работы сервисов.",
+
+
+                Objectives =
+                {
+                    "Выбрать целевой сервер",
+                    "Зафиксировать миграцию",
+                    "Проверить производительность"
+                }
+            },
+
+
+            new()
+            {
+                Id = 5,
+
+
+                Name = "Сбой сервера",
+
+
+                Description =
+                    "Восстановите работу сервисов после сбоя физического сервера.",
+
+
+                Objectives =
+                {
+                    "Восстановить сервисы",
+                    "Перераспределить контейнеры",
+                    "Сократить время простоя"
+                }
+            },
+
+
+            new()
+            {
+                Id = 6,
+
+
+                Name = "Энергоэффективное распределение",
+
+
+                Description =
+                    "Снизьте энергопотребление за счет консолидации рабочей нагрузки.",
+
+
+                Objectives =
+                {
+                    "Консолидировать нагрузку",
+                    "Снизить энергопотребление",
+                    "Соблюдать SLA"
+                }
+            }
+        };
+
+
+        CurrentScenario = ScenarioList.First();
+    }
+
+
+    void ScenarioChanged(object value)
+    {
+        SelectedScenarioId = Convert.ToInt32(value);
+
+
+        CurrentScenario =
+
+
+            ScenarioList.First(x =>
+                x.Id == SelectedScenarioId);
+
+
+        ScenarioCompletion = 0;
+
+
+        ScenarioStatus =
+
+
+            $"Сценарий \"{CurrentScenario.Name}\" загружен.";
+    }
+
+
+    void DeployContainer()
+    {
+        var target = Servers
+            .Where(s => s.IsOnline)
+            .OrderBy(s => s.CPU)
+            .First();
+
+
+        target.Containers.Add(new ContainerModel
+        {
+            Name = $"CAD-{Random.Shared.Next(1000,9999)}",
+            CPU = Random.Shared.Next(5, 12),
+            Memory = Random.Shared.Next(4, 10),
+            Status = "Работает",
+            Priority = "Обычный"
+        });
+
+
+        EngineeringScore += 5;
+        ScenarioCompletion = Math.Min(100, ScenarioCompletion + 10);
+        ScenarioStatus = "Контейнер успешно развернут.";
+
+
+        Recalculate();
+    }
+
+
+
+    void MigrateContainer(ContainerModel container)
+    {
+        var source = Servers.First(s => s.Containers.Contains(container));
+
+
+        var target = Servers
+            .Where(s => s != source && s.IsOnline)
+            .OrderBy(s => s.CPU)
+            .FirstOrDefault();
+
+
+        if (target == null)
+            return;
+
+
+        source.Containers.Remove(container);
+
+
+        target.Containers.Add(container);
+
+
+        container.MigrationHistory.Add(
+            $"{DateTime.Now:HH:mm:ss} : {source.Name} → {target.Name}");
+
+
+        EngineeringScore += 3;
+
+
+        Recalculate();
+    }
+
+    void BalanceCluster()
+    {
+        var overloaded = Servers
+            .Where(s => s.IsOnline)
+            .OrderByDescending(s => s.CPU)
+            .First();
+
+
+        if (!overloaded.Containers.Any())
+            return;
+
+
+        var container = overloaded.Containers
+            .OrderByDescending(c => c.CPU)
+            .First();
+
+
+        MigrateContainer(container);
+
+
+        EngineeringScore += 10;
+
+
+        ScenarioCompletion = Math.Min(100, ScenarioCompletion + 15);
+
+
+        ScenarioStatus = "Кластер сбалансирован.";
+    }
+
+
+    void RecoverServer()
+    {
+        var failed = Servers
+            .Where(s => s.IsOnline)
+            .OrderByDescending(s => s.CPU)
+            .First();
+
+
+        failed.IsOnline = false;
+
+
+        foreach (var c in failed.Containers.ToList())
+        {
+            var target = Servers
+                .Where(s => s.IsOnline)
+                .OrderBy(s => s.CPU)
+                .First();
+
+
+            failed.Containers.Remove(c);
+
+
+            target.Containers.Add(c);
+
+
+            c.MigrationHistory.Add(
+                $"Восстановление: {failed.Name} → {target.Name}");
+        }
+
+
+        EngineeringScore += 20;
+
+
+        ScenarioCompletion = Math.Min(100, ScenarioCompletion + 20);
+
+
+        ScenarioStatus = "Работа сервера успешно восстановлена.";
+
+
+        Recalculate();
+    }
+
+
+    void EnergyOptimization()
+    {
+        foreach (var server in Servers.Where(s => s.IsOnline))
+        {
+            if (server.CPU < 20)
+                server.Network *= 0.75;
+        }
+
+
+        EngineeringScore += 8;
+
+
+        ScenarioCompletion = Math.Min(100, ScenarioCompletion + 10);
+
+
+        ScenarioStatus = "Энергооптимизация завершена.";
+
+
+        Recalculate();
+    }
+
+
+    void ManualDecision()
+    {
+        EngineeringScore += 2;
+
+
+        RecordDecision(
+            "Ручной",
+            "Студент выбрал стратегию управления");
+
+
+        CurrentRecommendation =
+            "Ручная стратегия выполнена.";
+
+
+        UpdateAdaptiveStatistics();
+    }
+
+
+    void HeuristicDecision()
+    {
+        BalanceCluster();
+
+
+        RecordDecision(
+            "Эвристический",
+            "Планировщик на основе правил");
+
+
+        CurrentRecommendation =
+            "Эвристический планировщик перераспределил нагрузку.";
+
+
+        UpdateAdaptiveStatistics();
+    }
+
+
+    void AdaptiveDecision()
+    {
+        AdaptiveScheduler();
+
+
+        RecordDecision(
+            "Адаптивный ИИ",
+            "Контроллер на базе RL");
+
+
+        CurrentRecommendation = BuildRecommendation();
+
+
+        UpdateAdaptiveStatistics();
+    }
+
+
+    void AdaptiveScheduler()
+    {
+        var overloaded = Servers
+            .Where(s => s.IsOnline)
+            .OrderByDescending(s => s.CPU)
+            .FirstOrDefault();
+
+
+        if (overloaded == null)
+            return;
+
+
+        var target = Servers
+            .Where(s => s.IsOnline && s != overloaded)
+            .OrderBy(s => s.CPU)
+            .FirstOrDefault();
+
+
+        if (target == null)
+            return;
+
+
+        var container = overloaded.Containers
+            .OrderByDescending(c => c.CPU)
+            .FirstOrDefault();
+
+
+        if (container == null)
+            return;
+
+
+        overloaded.Containers.Remove(container);
+
+
+        target.Containers.Add(container);
+
+
+        container.MigrationHistory.Add(
+            $"ИИ Планировщик → {target.Name}");
+
+
+        Recalculate();
+    }
+
+    void Recalculate()
+    {
+        foreach (var server in Servers)
+        {
+            server.CPU = Math.Min(
+                100,
+                server.Containers.Sum(c => c.CPU));
+
+
+            server.Memory = Math.Min(
+                100,
+                server.Containers.Sum(c => c.Memory));
+
+
+            server.Storage = Math.Min(
+                100,
+                20 + server.Containers.Count * 5);
+
+
+            server.Network = Math.Min(
+                100,
+                server.CPU * 0.85);
+        }
+    }
+
+    void RecordDecision(
+        string controller,
+        string action)
+    {
+        DecisionHistory.Insert(0,
+            new DecisionRecord
+            {
+                Time = DateTime.Now.ToLongTimeString(),
+                Controller = controller,
+                Action = action,
+                Reward = CalculateReward(),
+                Score = EngineeringScore
+            });
+
+
+        if (DecisionHistory.Count > 25)
+            DecisionHistory.RemoveAt(25);
+    }
+
+
+    double CalculateReward()
+    {
+        var cpu = Servers.Average(s => s.CPU);
+
+
+        var ram = Servers.Average(s => s.Memory);
+
+
+        var balance =
+            Servers.Max(s => s.CPU)
+            -
+            Servers.Min(s => s.CPU);
+
+
+        return Math.Round(
+            100
+            - cpu * 0.35
+            - ram * 0.30
+            - balance * 0.35,
+            1);
+    }
+
+
+    void UpdateAdaptiveStatistics()
+    {
+        ClusterEfficiency =
+            (int)Math.Round(CalculateReward());
+
+
+        AIConfidence =
+            Math.Min(100, AIConfidence + 1);
+
+
+        LearningProgress =
+            Math.Min(100, LearningProgress + 2);
+    }
+
+    string BuildRecommendation()
+    {
+        var overloaded = Servers
+            .Where(s => s.CPU > 80)
+            .Count();
+
+
+        if (overloaded == 0)
+        {
+            return
+                "Загрузка кластера находится в допустимых пределах. Продолжайте наблюдение за ресурсами.";
+        }
+
+
+        return
+            $"Обнаружено перегруженных серверов: {overloaded}. "
+            + "Рекомендуемое действие: мигрировать высоконагруженные CAD-контейнеры "
+            + "на наименее загруженный физический сервер.";
+    }
+}
+
+
+<style>
+
+body {
+    background: var(--kendo-color-surface-alt);
+}
+
+
+h2, h3, h4, h5 {
+    font-weight: 600;
+}
+
+
+.k-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+    transition: .25s;
+}
+
+
+.k-card:hover {
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .14);
+}
+
+
+.k-tilelayout-item {
+    border-radius: 10px;
+}
+
+
+.k-grid {
+    font-size: .90rem;
+}
+
+
+.k-grid-header {
+    font-weight: 600;
+}
+
+
+.k-progressbar {
+    margin-top: 4px;
+    margin-bottom: 6px;
+}
+
+
+.badge {
+    font-size: .85rem;
+    padding: 7px 10px;
+    border-radius: 4px;
+}
+
+
+.alert {
+    border-radius: 8px;
+}
+
+
+.k-w-full {
+    width: 100%;
+}
+
+
+.server-online {
+    border-left: 6px solid var(--kendo-color-success);
+}
+
+
+.server-warning {
+    border-left: 6px solid var(--kendo-color-warning);
+}
+
+
+.server-overloaded {
+    border-left: 6px solid var(--kendo-color-error);
+}
+
+
+.server-offline {
+    border-left: 6px solid var(--kendo-color-base);
+    opacity: .65;
+}
+
+
+.metric-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+
+.metric-value {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+
+.ai-panel {
+    background: var(--kendo-color-primary-subtle);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+
+.status-good {
+    color: var(--kendo-color-success);
+    font-weight: bold;
+}
+
+
+.status-warning {
+    color: var(--kendo-color-warning);
+    font-weight: bold;
+}
+
+
+.status-critical {
+    color: var(--kendo-color-error);
+    font-weight: bold;
+}
+
+
+.k-button {
+    margin-top: 4px;
+}
+
+
+.k-button:hover {
+    transform: translateY(-1px);
+}
+
+
+.k-tabstrip {
+    margin-top: 5px;
+}
+
+
+.simulator-title {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+
+.simulator-subtitle {
+    color: var(--kendo-color-subtle);
+}
+
+
+.telemetry-value {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+
+.history-table {
+    font-size: .90rem;
+}
+
+
+.progress-label {
+    margin-top: 3px;
+    font-weight: 600;
+}
+
+
+.panel-header {
+    font-weight: 700;
+}
+
+
+.objective-item {
+    padding: 2px 0;
+}
+
+
+.server-name {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+
+.cluster-summary {
+    border-radius: 10px;
+    padding: 10px;
+    background: var(--kendo-color-surface);
+}
+
+
+.decision-good {
+    color: var(--kendo-color-success);
+}
+
+
+.decision-neutral {
+    color: var(--kendo-color-info);
+}
+
+
+.decision-warning {
+    color: var(--kendo-color-error);
+}
+</style>
+
